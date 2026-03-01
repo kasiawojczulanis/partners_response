@@ -1,4 +1,11 @@
-# PARTNERS 
+# Script for the study published in XXX
+
+# Title: "Limited capacity for parental compensation under experimental handicap in a small pelagic seabird, the Little Auk" 
+# Authors: Katarzyna Wojczulanis-Jakubas1*, Pauline Bodson1, Jerome Fort2, David Gremillet3,4, Andrea Grunst5, Melissa Grunst5, Kristin Piening1, Martyna Syposz1, Dariusz Jakubas1
+
+# Study Question # 1 
+# Does the provisioning effort of a parent change when its partner is experimentally burdened?
+  
 
 # Libs ----
 
@@ -20,13 +27,17 @@ library(patchwork)
 nfeeds_chr1_df <-   readRDS("C:/Users/DELL/Dropbox/Working files/Projects/GPSeffect/GPS_effect/nfeeds_chr1_df.rds")
 
 
-# examine sample size
+
+
+# ---- Sample size and sex ratios ----------------------------------
+
+# examine sample size (Suppl Materials, Table S1)
 nfeeds_chr1_df %>%
   distinct(season, nest, nest_device_stat) %>%
   count(season, nest_device_stat)
 
 
-# examine sex of the deployed ind
+# examine sex of the deployed ind  
 nfeeds_chr1_df %>%
   filter(nest_device_stat %in% c("acc", "gps"),
          partner_device_stat == "deploy") %>% 
@@ -34,7 +45,7 @@ nfeeds_chr1_df %>%
   summarise(n = n())
 
 
-# examine sex of the top feeders
+# examine sex of the top feeders (Suppl Materials, Table S2)
 paired <- nfeeds_chr1_df %>%
   select(season, nest, nest_device_stat, sx, nfeeds) %>%
   pivot_wider(
@@ -67,7 +78,10 @@ male_top   <- 18
 
 binom.test(female_top, female_top + male_top, p = 0.5)
 
-# ---- Reshape data -------------------------------
+
+# ---- Reshape data for modelling -------------------------------
+# top = higher feeding partner
+# bottom = lower feeding partner
 
 # controls
 partners_control <- nfeeds_chr1_df %>%
@@ -110,6 +124,8 @@ top_bottom_chr1 <- bind_rows(
 
 
 # ---- Analysis #1 -------------------------------
+# Comparison of provisioning rates of higher‑ and lower‑feeding parents between experimental and control groups.
+
 
 # prepare data for the model
 top_bottom_all_long <- top_bottom_chr1 %>%
@@ -157,7 +173,7 @@ pp_check(model_prior_nfeeds, fun = "dens_overlay") +
     legend.title = element_blank()
   )
 
-# ggsave("prior_feeds_plot.png", width = 7, height = 9, dpi = 300)
+# ggsave("Q1a_priors_nfeeds.png", width = 7, height = 9, dpi = 300)
 
 
 # model ----
@@ -172,9 +188,10 @@ model_nfeeds <- brm(
 )
 
 
+# model diagnostics
+
 # posterior check
 pp_check(model_nfeeds, type = "dens_overlay")
-
 
 # overdispersion check
 pp_check(model_nfeeds, type = "stat", stat = "sd")
@@ -182,7 +199,6 @@ pp_check(model_nfeeds, type = "stat", stat = "var")
 
 # model check
 plot(model_nfeeds)
-
 
 mcmc_plot(model_nfeeds, type = "acf")
 mcmc_plot(model_nfeeds, type = "pairs")
@@ -196,6 +212,7 @@ nuts_params(model_nfeeds) %>%  subset(Parameter == "divergent__") %>%
 nuts_params(model_nfeeds) %>%  subset(Parameter == "treedepth__") %>% 
   group_by(Value) %>% 
   summarise(n = n())
+
 
 
 # model summary
@@ -237,11 +254,13 @@ pred_long <- pred %>%
     values_to = "value"
   ) %>%
   mutate(row_id = as.numeric(gsub("V", "", row_id))) %>%
-  left_join(pred_df, by = "row_id")
+  left_join(pred_df, by = "row_id") %>% 
+  mutate(parent = if_else(parent == "top", "higher-feeding", "lower-feeding")) # for plotting/ms adjust labels
+
 
 
 # plot
-ggplot(pred_long, aes(x = parent, y = value, fill = group)) +
+posteriors1_plot <- ggplot(pred_long, aes(x = parent, y = value, fill = group)) +
   stat_halfeye(alpha = 0.6, position = position_dodge(width = 0.6)) +
   scale_fill_manual(values = c(
     "control"    = "steelblue",  
@@ -249,13 +268,12 @@ ggplot(pred_long, aes(x = parent, y = value, fill = group)) +
   )) +
   labs(x = "Parent type",
      y = "Posterior predicted number of feedings (per 48h)",
-     title = "Posterior distributions and medians with 95 CI",
+     title = "Posterior distributions and medians with 95% CI",
      fill = "Experimental group") +
   
     theme_bw()
 
-
-# ggsave("posterior_feeds_plot.png", width = 7, height = 9, dpi = 300)
+# ggsave(posteriors1_plot, "Q1a_posteriors_nfeeds.png", width = 7, height = 9, dpi = 300)
 
 # contrasts -----
 
@@ -290,8 +308,19 @@ desired_order <- desired_order[desired_order %in% all_contrasts]
 
 contr_df$contrast <- factor(contr_df$contrast, levels = desired_order)
 
+
+# relabel for plotting
+contr_df$contrast <- recode(
+  contr_df$contrast,
+  "control bottom / deployment bottom" = "control vs experimental, lower-feeding parents",
+  "control bottom / control top"       = "control; lower-feeding vs higher-feeding parents",
+  "deployment bottom / deployment top" = "experimental; lower-feeding vs higher-feeding parents",
+  "control top / deployment top"       = "control vs experimental, higher-feeding parents"
+)
+
+
 # plotting contrasts - forest plot
-ggplot(contr_df, aes(
+plot1_contrasts <- ggplot(contr_df, aes( 
   x = contrast,
   y = ratio,
   ymin = lower,
@@ -304,16 +333,20 @@ ggplot(contr_df, aes(
   labs(
     title = "Parent effect within each group",
     x = "",
-    y = "Ratio (bottom / top)"
+    y = "Ratio (lower-feeding vs higher-feeding parent)"
   )
 
-# ggsave("contrasts_feeds_plot.png", width = 7, height = 9, dpi = 300)
+# ggsave(plot1_contrasts, "Q1a_contrasts_nfeeds.png", width = 10, height = 9, dpi = 300)
 
+# combine posteriors and contrasts plots (for ms)
 
-
+combined_plot <- posteriors1_plot + plot1_contrasts +
+  plot_layout(ncol = 2)
+# ggsave("Q1_res_plots.png", combined_plot, width = 14, height = 9, dpi = 300)
 
 
 # ---- Analysis #2 -------------------------------
+# Analysis  of the relationship between provisioning rates of the parners 
 
 
 # priors ----
@@ -340,7 +373,7 @@ model_prior_topbottom <- brm(
 pp_check(model_prior_topbottom, fun = "dens_overlay") +
   xlim(-1, 50) +
   labs(
-    x = "Feeding rate (n feeds/48h) of top feeders",
+    x = "Feeding rate (n feeds/48h) of higher-feeding parent",
     y = "Density",
     title = "Prior predictive distribution",
     subtitle = "Model: Poisson with log link"
@@ -354,7 +387,7 @@ pp_check(model_prior_topbottom, fun = "dens_overlay") +
     legend.title = element_blank()
   )
 
-ggsave("prior_feeds_relation_plot.png", width = 7, height = 9, dpi = 300)
+ggsave("Q1b_priors_feeds_relation.png", width = 7, height = 9, dpi = 300)
 
 
 
@@ -371,9 +404,10 @@ model_topbottom <- brm(
 )
 
 
+# model diagnostics
+
 # posterior check
 pp_check(model_topbottom, type = "dens_overlay")
-
 
 # overdispersion check
 pp_check(model_topbottom, type = "stat", stat = "sd")
@@ -397,8 +431,6 @@ nuts_params(model_topbottom) %>%  subset(Parameter == "treedepth__") %>%
 
 loo(model_topbottom)
 
-
-
 # model summary
 describe_posterior(model_topbottom)
 bayes_R2(model_topbottom)
@@ -406,7 +438,7 @@ bayes_R2(model_topbottom)
 summary(model_topbottom)
 
 
-# plotting posterior preditions ----
+# plotting posterior predictions ----
 
 # prep data
 newdata <- expand.grid(
@@ -429,7 +461,7 @@ pred_summary <- newdata %>%
   )
 
 # plot
-ggplot() +
+posteriors2_plot <- ggplot() +
   geom_jitter(
     data = top_bottom_chr1,
     aes(x = bottom, y = top, color = group),
@@ -458,13 +490,17 @@ ggplot() +
     )
   ) +
   labs(
-    title = "Model predictions for bottom feeding rate",
-    x = "Bottom partner feeding count",
-    y = "Predicted top partner feeding count",
+    title = "Model predictions for feeding rate of higher-feeding parent",
+    x = "Feeding rate of lower-feeding parent count",
+    y = "Predicted feeding rate of higher-feeding parent",
     color = "Experimental group",
     fill = "Experimental group"
   ) +
   theme_minimal(base_size = 14)
+
+
+ggsave(posteriors2_plot, filename = "Q1b_posteriors_feeds_relation.png", width = 9, height = 9, dpi = 300)
+
 
 
 # posterior slopes
@@ -478,17 +514,17 @@ slopes_df <- tibble(
   group = rep(c("control", "deployment"), each = length(control_slope))
 )
 
-p1 <- ggplot(slopes_df, aes(x = group, y = slope, fill = group)) +
+slopes <- ggplot(slopes_df, aes(x = group, y = slope, fill = group)) +
   stat_halfeye(alpha = 0.6) +
   scale_fill_manual(values = c("control" = "steelblue", "deployment" = "tomato4")) +
   labs(
     x = "",
-    y = "Posterior slope (effect of bottom on top)",
+    y = "Posterior slope (effect of lower- on higher-feeding parent)",
     title = "Posterior distribution of slopes by group"
   ) +
   theme_bw()
 
-# ggsave("posterior_slopes_plot.png", width = 7, height = 9, dpi = 300)
+# ggsave(slopes, filename = "posterior_slopes.png", width = 7, height = 9, dpi = 300)
 
 
 
@@ -501,13 +537,13 @@ deployment_slope  <- post$b_bottom + post$`b_bottom:groupdeployment`
 slope_diff <- control_slope - deployment_slope
 df_diff <- tibble(slope_diff = slope_diff)
 
-p2 <- ggplot(df_diff, aes(x = slope_diff)) +
+slopes_diff <- ggplot(df_diff, aes(x = slope_diff)) +
   geom_histogram(bins = 40, fill = "grey40", color = "white", alpha = 0.8) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "grey30", size = 1) +
   labs(
     title = "Posterior distribution of the difference in slopes",
     subtitle = "Difference = slope_control − slope_deployment",
-    x = "Difference in slope",
+    x = "Difference in slopes",
     y = "Posterior density"
   ) +
   theme_bw(base_size = 14)
@@ -516,13 +552,14 @@ p2 <- ggplot(df_diff, aes(x = slope_diff)) +
 # ggsave("posterior_slopes_diff_plot.png", width = 7, height = 9, dpi = 300)
 
 
-combined_plot <- p1 + p2
+combined_plot <- slopes + slopes_diff + 
+  plot_layout(widths = c(1, 1.5)) 
 
 # ggsave(
-#   filename ="posterior_slopes_combined.png",
+#   filename ="Q1b_res_plots.png",
 #   plot = combined_plot,
-#   width = 12,     
-#   height = 5,     
+#   width = 14,
+#   height = 5,
 #   dpi = 300
 # )
 
