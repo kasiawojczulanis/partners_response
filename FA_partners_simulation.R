@@ -155,7 +155,7 @@ ff_dist <- p1 + p2 +
   )
 
 # ggsave(
-#   filename ="ff_distributions.png",
+#   filename ="./Plots/ff_distributions.png",
 #   plot = ff_dist,
 #   width = 12,
 #   height = 5,
@@ -169,7 +169,7 @@ other_dt <- readRDS("./Data/activity_controls_chr1.rds")
 other_dt <- other_dt %>% 
   filter(behav_blocks %in% c("colony", "nest", "latency"))
 
-ggplot(other_dt, aes(x = log(tot_dur_min))) +
+other <- ggplot(other_dt, aes(x = log(tot_dur_min))) +
   facet_grid(season ~ behav_blocks) +
   geom_density(fill = "#4C72B0", alpha = 0.7, color = NA) +
   labs(
@@ -182,13 +182,13 @@ ggplot(other_dt, aes(x = log(tot_dur_min))) +
     panel.grid.minor = element_blank()
   )
 
-# ggsave(
-#   filename ="./Plots/other_distributions.png",
-#   plot = ff_dist,
-#   width = 12,
-#   height = 5,
-#   dpi = 300
-# )
+ggsave(
+  filename ="./Plots/other_distributions.png",
+  plot = other,
+  width = 12,
+  height = 5,
+  dpi = 300
+)
 
 
 
