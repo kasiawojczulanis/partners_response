@@ -24,7 +24,7 @@ library(patchwork)
 
 # ---- Read data ----------------------------------
 
-nfeeds_chr1_df <-   readRDS("C:/Users/DELL/Dropbox/Working files/Projects/GPSeffect/GPS_effect/nfeeds_chr1_df.rds")
+nfeeds_chr1_df <-   readRDS("./nfeeds_chr1_df.rds")
 
 
 
@@ -80,8 +80,8 @@ binom.test(female_top, female_top + male_top, p = 0.5)
 
 
 # ---- Reshape data for modelling -------------------------------
-# top = higher feeding partner
-# bottom = lower feeding partner
+# top = higher-feeding partner
+# bottom = lower-feeding partner
 
 # controls
 partners_control <- nfeeds_chr1_df %>%
@@ -342,7 +342,7 @@ plot1_contrasts <- ggplot(contr_df, aes(
 
 combined_plot <- posteriors1_plot + plot1_contrasts +
   plot_layout(ncol = 2)
-# ggsave("Q1_res_plots.png", combined_plot, width = 14, height = 9, dpi = 300)
+# ggsave("Q1a_res_plots.png", combined_plot, width = 14, height = 9, dpi = 300)
 
 
 # ---- Analysis #2 -------------------------------
@@ -499,7 +499,7 @@ posteriors2_plot <- ggplot() +
   theme_minimal(base_size = 14)
 
 
-ggsave(posteriors2_plot, filename = "Q1b_posteriors_feeds_relation.png", width = 9, height = 9, dpi = 300)
+# ggsave(posteriors2_plot, filename = "Q1b_posteriors_feeds_relation.png", width = 9, height = 9, dpi = 300)
 
 
 
