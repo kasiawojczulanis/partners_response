@@ -23,7 +23,7 @@ library(patchwork)
 
 # ---- Read data ----------------------------------
 
-nfeeds_chr2_df <- readRDS("C:/Users/DELL/Dropbox/Working files/Projects/Partners_response/nfeeds_chr2_df.rds")
+nfeeds_chr2_df <- readRDS("./nfeeds_chr2_df.rds")
 
 
 
@@ -468,12 +468,7 @@ posteriors2_plot <- ggplot() +
 # Analysis of parents feeding position in the early (burden deployment) and mid chick rearing (burden removal)
 
 # data
-all_nfeeds <- readRDS("C:/Users/DELL/Dropbox/Working files/Projects/GPSeffect/GPS_effect/05_nfeeds_data.rds")
-all_nfeeds <- all_nfeeds %>% 
-  filter(season !="2020") # no meaningful data for this season
-all_nfeeds <- all_nfeeds %>% 
-  select(session, season, nest, sx, device, partner_device_stat, nest_device_stat, nfeeds)
-
+all_nfeeds <- readRDS("./nfeeds_chr12_df.rds")
 
 # data adjustment
 top_bottom_temp <- all_nfeeds %>%
