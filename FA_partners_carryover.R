@@ -23,7 +23,7 @@ library(patchwork)
 
 # ---- Read data ----------------------------------
 
-nfeeds_chr2_df <- readRDS("./nfeeds_chr2_df.rds")
+nfeeds_chr2_df <- readRDS("./Data/nfeeds_chr2_df.rds")
 
 
 
@@ -127,7 +127,7 @@ pp_check(model_prior_nfeeds, fun = "dens_overlay") +
     legend.title = element_blank()
   )
 
-# ggsave("Q2a_priors_nfeeds.png", width = 8, height = 9, dpi = 300)
+# ggsave("./Plots/Q2a_priors_nfeeds.png", width = 8, height = 9, dpi = 300)
 
  
 
@@ -231,7 +231,7 @@ posteriors1_plot <- ggplot(pred_long, aes(x = parent, y = value, fill = group)) 
   theme_bw()
 
 
-# ggsave(posteriors1_plot, filename = "Q2a_posteriors_nfeeds.png", width = 8, height = 9, dpi = 300)
+# ggsave(posteriors1_plot, filename = "./Plots/Q2a_posteriors_nfeeds.png", width = 8, height = 9, dpi = 300)
 
 # contrasts -----
 
@@ -299,7 +299,7 @@ ggsave(plot1_contrasts, filename = "Q2a_contrasts_nfeeds.png", width = 10, heigh
 
 combined_plot <- posteriors1_plot + plot1_contrasts +
   plot_layout(ncol = 2)
-# ggsave("Q2a_res_plots.png", combined_plot, width = 14, height = 9, dpi = 300)
+# ggsave(combined_plot, filename = "./Plots/Q2a_res_plots.png", width = 14, height = 9, dpi = 300)
 
 
 
@@ -347,7 +347,7 @@ pp_check(model_prior_topbottom, fun = "dens_overlay") +
     legend.title = element_blank()
   )
 
-# ggsave("Q2b_priors_feeds_relation.png", width = 7, height = 9, dpi = 300)
+# ggsave("./Plots/Q2b_priors_feeds_relation.png", width = 7, height = 9, dpi = 300)
 
 
 # model----
@@ -461,14 +461,14 @@ posteriors2_plot <- ggplot() +
   theme_minimal(base_size = 14)
 
 
-# ggsave(posteriors2_plot, filename = "Q2b_posteriors_feeds_relation.png", width = 9, height = 9, dpi = 300)
+# ggsave(posteriors2_plot, filename = "./Plots/Q2b_posteriors_feeds_relation.png", width = 9, height = 9, dpi = 300)
 
 
 # ---- Analysis #3 -------------------------------
 # Analysis of parents feeding position in the early (burden deployment) and mid chick rearing (burden removal)
 
 # data
-all_nfeeds <- readRDS("./nfeeds_chr12_df.rds")
+all_nfeeds <- readRDS("./Data/nfeeds_chr12_df.rds")
 
 # data adjustment
 top_bottom_temp <- all_nfeeds %>%
@@ -534,7 +534,7 @@ allu_plot <-   ggplot(allu_df, aes(axis1 = session_cr1,
   ) +
   theme_minimal()
 
-# ggsave(allu_plot, filename = "Q2c_allu_plot.png", width = 7, height = 9, dpi = 300)
+# ggsave(allu_plot, filename = "./Plots/Q2c_allu_plot.png", width = 7, height = 9, dpi = 300)
 
 
 # data prep for the model
@@ -649,7 +649,7 @@ pp2 <- tibble(diff_prob = as.numeric(diff_prob)) %>%
 combined_plot <- pp1 + pp2
 
 # ggsave(
-#   filename ="Q2c_posterior_props_diff_combined.png",
+#   filename ="./Plots/Q2c_posterior_props_diff_combined.png",
 #   plot = combined_plot,
 #   width = 14,
 #   height = 5,

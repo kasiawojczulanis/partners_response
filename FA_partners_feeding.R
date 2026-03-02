@@ -24,7 +24,7 @@ library(patchwork)
 
 # ---- Read data ----------------------------------
 
-nfeeds_chr1_df <-   readRDS("./nfeeds_chr1_df.rds")
+nfeeds_chr1_df <-   readRDS("./Data/nfeeds_chr1_df.rds")
 
 
 
@@ -173,7 +173,7 @@ pp_check(model_prior_nfeeds, fun = "dens_overlay") +
     legend.title = element_blank()
   )
 
-# ggsave("Q1a_priors_nfeeds.png", width = 7, height = 9, dpi = 300)
+# ggsave("./Plots/Q1a_priors_nfeeds.png", width = 7, height = 9, dpi = 300)
 
 
 # model ----
@@ -273,7 +273,7 @@ posteriors1_plot <- ggplot(pred_long, aes(x = parent, y = value, fill = group)) 
   
     theme_bw()
 
-# ggsave(posteriors1_plot, "Q1a_posteriors_nfeeds.png", width = 7, height = 9, dpi = 300)
+# ggsave(posteriors1_plot, "./Plots/Q1a_posteriors_nfeeds.png", width = 7, height = 9, dpi = 300)
 
 # contrasts -----
 
@@ -342,7 +342,7 @@ plot1_contrasts <- ggplot(contr_df, aes(
 
 combined_plot <- posteriors1_plot + plot1_contrasts +
   plot_layout(ncol = 2)
-# ggsave("Q1a_res_plots.png", combined_plot, width = 14, height = 9, dpi = 300)
+# ggsave(combined_plot, "./Plots/Q1a_res_plots.png", width = 14, height = 9, dpi = 300)
 
 
 # ---- Analysis #2 -------------------------------
@@ -387,7 +387,7 @@ pp_check(model_prior_topbottom, fun = "dens_overlay") +
     legend.title = element_blank()
   )
 
-ggsave("Q1b_priors_feeds_relation.png", width = 7, height = 9, dpi = 300)
+# ggsave("./Plots/Q1b_priors_feeds_relation.png", width = 7, height = 9, dpi = 300)
 
 
 
@@ -499,7 +499,7 @@ posteriors2_plot <- ggplot() +
   theme_minimal(base_size = 14)
 
 
-# ggsave(posteriors2_plot, filename = "Q1b_posteriors_feeds_relation.png", width = 9, height = 9, dpi = 300)
+# ggsave(posteriors2_plot, filename = "./Plots/Q1b_posteriors_feeds_relation.png", width = 9, height = 9, dpi = 300)
 
 
 
@@ -524,7 +524,7 @@ slopes <- ggplot(slopes_df, aes(x = group, y = slope, fill = group)) +
   ) +
   theme_bw()
 
-# ggsave(slopes, filename = "posterior_slopes.png", width = 7, height = 9, dpi = 300)
+# ggsave(slopes, filename = "./Plots/posterior_slopes.png", width = 7, height = 9, dpi = 300)
 
 
 
@@ -549,14 +549,14 @@ slopes_diff <- ggplot(df_diff, aes(x = slope_diff)) +
   theme_bw(base_size = 14)
 
 
-# ggsave("posterior_slopes_diff_plot.png", width = 7, height = 9, dpi = 300)
+# ggsave("./Plots/posterior_slopes_diff_plot.png", width = 7, height = 9, dpi = 300)
 
 
 combined_plot <- slopes + slopes_diff + 
   plot_layout(widths = c(1, 1.5)) 
 
 # ggsave(
-#   filename ="Q1b_res_plots.png",
+#   filename ="./Plots/Q1b_res_plots.png",
 #   plot = combined_plot,
 #   width = 14,
 #   height = 5,
