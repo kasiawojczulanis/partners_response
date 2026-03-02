@@ -1,5 +1,11 @@
-# PARTNERS 
+# Script for the study published in XXX
 
+# Title: "Limited capacity for parental compensation under experimental handicap in a small pelagic seabird, the Little Auk" 
+# Authors: Katarzyna Wojczulanis-Jakubas1*, Pauline Bodson1, Jerome Fort2, David Gremillet3,4, Andrea Grunst5, Melissa Grunst5, Kristin Piening1, Martyna Syposz1, Dariusz Jakubas1
+
+# Study Question # 2 
+# Do behavioural effects persist after the burden is removed? 
+  
 # Libs ----
 
 library(tidyverse)
@@ -11,20 +17,29 @@ library(bayesplot)
 library(bayestestR)
 library(tidybayes)
 
-
 library(emmeans)
+
+library(patchwork)
 
 # ---- Read data ----------------------------------
 
-
 nfeeds_chr2_df <- readRDS("C:/Users/DELL/Dropbox/Working files/Projects/Partners_response/nfeeds_chr2_df.rds")
+
+
+
+
+# ---- Sample size ----------------------------------
 
 # examine sample size
 nfeeds_chr2_df %>%
   distinct(season, nest, nest_device_stat) %>%
   count(season, nest_device_stat)
 
-# ---- Reshape data -------------------------------
+
+
+# ---- Reshape data for modelling -------------------------------
+# top = higher-feeding partner
+# bottom = lower-feeding partner
 
 # controls
 partners_control <- nfeeds_chr2_df %>%
@@ -67,6 +82,7 @@ top_bottom_chr2 <- bind_rows(
 
 
 # ---- Analysis #1 -------------------------------
+# Comparison of provisioning rates of higher‑ and lower‑feeding parents between experimental and control groups.
 
 # prepare data for the model
 top_bottom_all_long <- top_bottom_chr2 %>%
@@ -74,17 +90,12 @@ top_bottom_all_long <- top_bottom_chr2 %>%
 
 
 # priors ----
-
-
 priors <- c(
   set_prior("normal(2, 0.3)", class = "Intercept"),
   set_prior("normal(0, 0.2)", class = "b"),
   set_prior("exponential(5)", class = "sd", group = "season"),
   set_prior("exponential(5)", class = "sd", group = "nest")
 )
-
-
-
 
 model_prior_nfeeds <- brm(
   formula = nfeeds ~ parent * group + (1 | season) + (1|nest),
@@ -104,7 +115,7 @@ pp_check(model_prior_nfeeds, fun = "dens_overlay") +
   labs(
     x = "Number of feedings per 48h",
     y = "Density",
-    title = "Prior predictive distribution for mid chick rearing (devices removed)",
+    title = "Prior predictive distribution\nfor mid chick rearing (devices removed)",
     subtitle = "Model: Poisson with log link"
   ) +
   theme_classic(base_size = 14) +
@@ -116,12 +127,11 @@ pp_check(model_prior_nfeeds, fun = "dens_overlay") +
     legend.title = element_blank()
   )
 
-# ggsave("prior_feeds_chr2_plot.png", width = 7, height = 9, dpi = 300)
+# ggsave("Q2a_priors_nfeeds.png", width = 8, height = 9, dpi = 300)
 
  
 
 # model ----
-
 model_nfeeds <- brm(
   formula = nfeeds ~ parent * group + (1 | season) + (1 | nest),
   data = top_bottom_all_long,
@@ -132,6 +142,8 @@ model_nfeeds <- brm(
   control = list(adapt_delta = 0.995, max_treedepth = 12), refresh = 0  # better exploration
 )
 
+
+# model diagnostics
 
 # posterior check
 pp_check(model_nfeeds, type = "dens_overlay")
@@ -198,11 +210,13 @@ pred_long <- pred %>%
     values_to = "value"
   ) %>%
   mutate(row_id = as.numeric(gsub("V", "", row_id))) %>%  # V1 → 1
-  left_join(pred_df, by = "row_id")
+  left_join(pred_df, by = "row_id") %>% 
+  mutate(parent = if_else(parent == "top", "higher-feeding", "lower-feeding")) # for plotting/ms adjust labels
+
 
 
 # plot
-ggplot(pred_long, aes(x = parent, y = value, fill = group)) +
+posteriors1_plot <- ggplot(pred_long, aes(x = parent, y = value, fill = group)) +
   stat_halfeye(alpha = 0.6, position = position_dodge(width = 0.6)) +
   scale_fill_manual(values = c(
     "control"    = "steelblue",  
@@ -217,7 +231,7 @@ ggplot(pred_long, aes(x = parent, y = value, fill = group)) +
   theme_bw()
 
 
-# ggsave("posterior_feeds_plot_chr2.png", width = 7, height = 9, dpi = 300)
+# ggsave(posteriors1_plot, filename = "Q2a_posteriors_nfeeds.png", width = 8, height = 9, dpi = 300)
 
 # contrasts -----
 
@@ -252,8 +266,18 @@ desired_order <- desired_order[desired_order %in% all_contrasts]
 
 contr_df$contrast <- factor(contr_df$contrast, levels = desired_order)
 
+# relabel for plotting
+contr_df$contrast <- recode(
+  contr_df$contrast,
+  "control bottom / deployment bottom" = "control vs experimental, lower-feeding parents",
+  "control bottom / control top"       = "control; lower-feeding vs higher-feeding parents",
+  "deployment bottom / deployment top" = "experimental; lower-feeding vs higher-feeding parents",
+  "control top / deployment top"       = "control vs experimental, higher-feeding parents"
+)
+
+
 # plotting contrasts - forest plot
-ggplot(contr_df, aes(
+plot1_contrasts <- ggplot(contr_df, aes(
   x = contrast,
   y = ratio,
   ymin = lower,
@@ -266,16 +290,23 @@ ggplot(contr_df, aes(
   labs(
     title = "Parent effect within each group",
     x = "",
-    y = "Ratio (bottom / top)"
+    y = "Ratio (lower-feeding vs higher-feeding parent)"
   )
 
-# ggsave("contrasts_feeds_plot_chr2.png", width = 7, height = 9, dpi = 300)
+ggsave(plot1_contrasts, filename = "Q2a_contrasts_nfeeds.png", width = 10, height = 9, dpi = 300)
+
+# combine posteriors and contrasts plots (for ms)
+
+combined_plot <- posteriors1_plot + plot1_contrasts +
+  plot_layout(ncol = 2)
+# ggsave("Q2a_res_plots.png", combined_plot, width = 14, height = 9, dpi = 300)
 
 
 
 
 
 # ---- Analysis #2 -------------------------------
+# Analysis  of the relationship between provisioning rates of the parners 
 
 
 # priors ----
@@ -304,7 +335,7 @@ pp_check(model_prior_topbottom, fun = "dens_overlay") +
   labs(
     x = "Number of feedings per 48h",
     y = "Density",
-    title = "Prior predictive distribution for mid chick rearing (devices removed)",
+    title = "Prior predictive distribution\nfor mid chick rearing (devices removed)",
     subtitle = "Model: Poisson with log link"
   ) +
   theme_classic(base_size = 14) +
@@ -316,6 +347,7 @@ pp_check(model_prior_topbottom, fun = "dens_overlay") +
     legend.title = element_blank()
   )
 
+# ggsave("Q2b_priors_feeds_relation.png", width = 7, height = 9, dpi = 300)
 
 
 # model----
@@ -331,9 +363,11 @@ model_topbottom <- brm(
 )
 
 
+
+# model diagnostics
+
 # posterior check
 pp_check(model_topbottom, type = "dens_overlay")
-
 
 # overdispersion check
 pp_check(model_topbottom, type = "stat", stat = "sd")
@@ -366,7 +400,7 @@ bayes_R2(model_topbottom)
 summary(model_topbottom)
 
 
-# plotting posterior preditions ----
+# plotting posterior predictions ----
 
 # prep data
 newdata <- expand.grid(
@@ -389,7 +423,7 @@ pred_summary <- newdata %>%
   )
 
 # plot
-ggplot() +
+posteriors2_plot <- ggplot() +
   geom_jitter(
     data = top_bottom_chr2,
     aes(x = bottom, y = top, color = group),
@@ -418,24 +452,28 @@ ggplot() +
     )
   ) +
   labs(
-    title = "Model predictions for bottom feeding rate",
-    x = "Bottom partner feeding count",
-    y = "Predicted top partner feeding count",
+    title = "Model predictions for feeding rate of higher-feeding parent",
+    x = "Feeding rate of lower-feeding parent count",
+    y = "Predicted feeding rate of higher-feeding parent",
     color = "Experimental group",
     fill = "Experimental group"
   ) +
   theme_minimal(base_size = 14)
 
 
-# ggsave("posterior_slopes__chr2_plot.png", width = 7, height = 9, dpi = 300)
+# ggsave(posteriors2_plot, filename = "Q2b_posteriors_feeds_relation.png", width = 9, height = 9, dpi = 300)
 
 
 # ---- Analysis #3 -------------------------------
+# Analysis of parents feeding position in the early (burden deployment) and mid chick rearing (burden removal)
 
 # data
 all_nfeeds <- readRDS("C:/Users/DELL/Dropbox/Working files/Projects/GPSeffect/GPS_effect/05_nfeeds_data.rds")
 all_nfeeds <- all_nfeeds %>% 
   filter(season !="2020") # no meaningful data for this season
+all_nfeeds <- all_nfeeds %>% 
+  select(session, season, nest, sx, device, partner_device_stat, nest_device_stat, nfeeds)
+
 
 # data adjustment
 top_bottom_temp <- all_nfeeds %>%
@@ -468,10 +506,16 @@ df_wide <- top_bottom_df %>%
 df_wide <- df_wide %>%
   mutate(group = factor(group, levels = c("control", "deployment")))
 
-df_wide %>% 
+allu_df <- df_wide %>% 
   filter(!is.na(group)) %>%
-  filter(session_cr1 == "top") %>% # single (top) parent from the nest
-  ggplot(aes(axis1 = session_cr1,
+  filter(session_cr1 == "top") %>%   # single (top) parent from the nest (the other would be redundant)
+  # relabelling for ms
+  mutate(session_cr1 = if_else(session_cr1 == "top", "higher-feeding", NA_character_)) %>% 
+  mutate(session_cr2 = if_else(session_cr2 == "top", "higher-feeding", 
+                               if_else(session_cr2 == "bottom", "lower-feeding", NA_character_)))
+  
+  
+allu_plot <-   ggplot(allu_df, aes(axis1 = session_cr1,
            axis2 = session_cr2,
            y = 1,
            fill = group,
@@ -480,24 +524,25 @@ df_wide %>%
   geom_stratum(width = 0.2, na.rm = TRUE) +
   geom_text(stat = "stratum",            # <- use geom_text instead of geom_label
             aes(label = after_stat(stratum)),
+            angle = 90,        # rotate text
             na.rm = TRUE) +
-  scale_x_discrete(limits = c("Session 1", "Session 2")) +
+  scale_x_discrete(limits = c("early (burden on) ", "mid (burden off)")) +
   scale_fill_manual(values = c(
     "control"    = "steelblue",
     "deployment" = "tomato4"
   ), na.translate = FALSE) +
   labs(
     title = "Change in the feeder status between early and mid chick rearing",
+    x = "Chick rearing phase",
     y = "Number of individuals",
     fill = ""
   ) +
   theme_minimal()
 
-# ggsave("alluvial_chr2_plot.png", width = 7, height = 9, dpi = 300)
+# ggsave(allu_plot, filename = "Q2c_allu_plot.png", width = 7, height = 9, dpi = 300)
 
 
 # data prep for the model
-
 df_model <- df_wide %>%
   mutate(
     stayed_top = case_when(
@@ -573,8 +618,8 @@ pp1 <- ggplot(ce_data, aes(x = group, y = estimate__, fill = group)) +
   theme_minimal() +
   labs(
     x = "Group",
-    y = "Posterior mean P(stayed top)",
-    title = "Probability of staying top feeder\n(control vs deployment, Bayesian model)"
+    y = "Posterior mean P(stayed higher-feeding parent)",
+    title = "Probability of staying higher-feeding parent\n(control vs deployment, Bayesian model)"
   )
 
 
@@ -600,20 +645,18 @@ pp2 <- tibble(diff_prob = as.numeric(diff_prob)) %>%
   geom_vline(xintercept = 0, linetype = "dashed") +
   theme_minimal() +
   labs(
-    x = "Deployment - Control (P(stayed top))",
+    x = "Deployment - Control (P(stayed higher-feeding parent))",
     y = "Posterior density (approx.)",
-    title = "Poster distribution of the difference between the treatment groups 
-    in probability of staying top feeder"
+    title = "Poster distribution of the difference between the treatment groups\nin probability of staying higher-feeding parent"
   )
 
 
-library(patchwork)
 combined_plot <- pp1 + pp2
 
 # ggsave(
-#   filename ="posterior_props_diff_combined.png",
+#   filename ="Q2c_posterior_props_diff_combined.png",
 #   plot = combined_plot,
-#   width = 12,
+#   width = 14,
 #   height = 5,
 #   dpi = 300
 # )
