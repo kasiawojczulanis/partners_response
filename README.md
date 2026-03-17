@@ -23,13 +23,14 @@ Descriptions of the script contents are provided within each script.
 The variables included in the associated datasets are defined as presented
 below.
 
-**Data:** *nfeeds_chr1_df.rds* and *nfeeds_chr2_df.rds* These two sets
-share the same structure and represent the same type of measurments -
+**Data:** *nfeeds_chr1_df.rds* and *nfeeds_chr2_df.rds*   
+These two sets share the same structure and represent the same type of measurments -
 number of feeding performed within 48 h time window. The only difference
 between the two sets is that *nfeeds_chr1.rds* represent the parameter
 recorded during early chick rearing period (when devices were on) while
 the *nfeeds_chr1.rds* represents the parameter during mid chick rearing
 (when devices were off).
+
 
 *season* - year of the study
 
@@ -48,9 +49,11 @@ feeding) performed by an individuals during 48h
 
 ---
 
-**Data:** *nfeeds_chr12_df.rds* Same data as *nfeeds_chr1_df.rds* and
-*nfeeds_chr2_df.rds*, just binded by rows to compare the birds
-foraging/feeding performance between the two chick rearing periods
+**Data:** *nfeeds_chr12_df.rds*   
+
+Same data as *nfeeds_chr1_df.rds* and *nfeeds_chr2_df.rds*, 
+just binded by rows to compare the birds foraging/feeding performance 
+between the two chick rearing periods
 (early and mid; devices on and off)
 
 *session* - recording session/chick rearing period: chick rearing1 -
@@ -74,10 +77,11 @@ feeding) performed by an individuals during 48h
 
 ---
 
-**Data:** *activity_controls_chr1.rds* Data of complete time intervals
-for the distinguished activities (see definition of those in the
-manuscript), registered during early chick rearing period in control
-birds.
+**Data:** *activity_controls_chr1.rds*     
+Data of complete time intervals for the distinguished activities 
+(see definition of those in the manuscript), 
+registered during early chick rearing period in control birds.
+
 
 *season* - year of the study
 
