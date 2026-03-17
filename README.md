@@ -1,9 +1,3 @@
----
-output:
-  html_document:
-    css: styles.css
----
-
 # Partners response
 
 This repository contains the R scripts and accompanying data sets used to reproduce the analyses presented in the manuscript by Wojczulanis‑Jakubas et al., “Limited capacity for parental compensation
